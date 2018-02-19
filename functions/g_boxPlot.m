@@ -2,7 +2,7 @@
 function  g_boxPlot (data, titleStr, xAxisLabels, xAxisLabelStr, yAxisLabelStr, saveImg, sigInfo)
 %% input arguments
 %
-% example: r_boxPlot (data, 'train run PSC results  per session', {'S1', 'S2', 'S3', 'S4', 'S5'}, 'Sessions', '% Signal Change', 0, sigInfo)
+% example: g_boxPlot (data, 'train run PSC results  per session', {'S1', 'S2', 'S3', 'S4', 'S5'}, 'Sessions', '% Signal Change', 0, sigInfo)
 %
 if nargin < 7
     sigInfo = {};
