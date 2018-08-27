@@ -3,9 +3,13 @@ clear,
 
 % add data folder to path
 addpath('data')
+addpath('functions')
 
 % load psy measures
 load psymeasdata.mat
+
+data_raw = npsymeas;
+
 
 % ------
 % var psymeasname - name of the variables available 
@@ -13,14 +17,13 @@ load psymeasdata.mat
 % ------
 
 %% presets
-cluster_num = 3;
+cluster_num = 2;
 
 
 %% data preprocessing
 
 % data de-mean and data normalization
-data = (npsymeas - min(npsymeas)) ./ ( max(npsymeas) - min(npsymeas) );
-
+data = (data_raw - min(data_raw)) ./ ( max(data_raw) - min(data_raw) );
 % find clusters in data
 [c_idx,c_means] = kmeans(data,...
     cluster_num,... % number of clusters
@@ -61,3 +64,31 @@ clustTreeEuc = linkage(eucD,'average');
 h_gca = gca;
 h_gca.TickDir = 'out';
 h_gca.TickLength = [.002 0];
+
+
+%% PCA
+[coeff,score,latent,~,explained] = pca(data);
+
+labels = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'};
+
+figure
+
+
+for i = 1:cluster_num
+    clust_i_idxs = find(c_idx == i);
+    plot3(score(clust_i_idxs,1),score(clust_i_idxs,2),score(clust_i_idxs,3),ptsymb{i});
+    hold on
+end
+
+offset = 0.15;
+text(score(:,1)+offset,score(:,2)+offset,score(:,3)+offset,labels,'HorizontalAlignment','left');
+
+title('neuropsy');
+
+%% 
+mean_val_per_clust = zeros(cluster_num, size(data, 2));
+
+for i = 1:cluster_num
+    clust_i_idxs = find(c_idx == i);
+    mean_val_per_clust (i, :) = mean(data_raw(clust_i_idxs,:));
+end
