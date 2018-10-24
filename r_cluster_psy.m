@@ -74,6 +74,8 @@ labels = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'};
 figure
 
 
+
+
 for i = 1:cluster_num
     clust_i_idxs = find(c_idx == i);
     plot3(score(clust_i_idxs,1),score(clust_i_idxs,2),score(clust_i_idxs,3),ptsymb{i});

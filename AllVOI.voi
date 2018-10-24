@@ -1,0 +1,19 @@
+FileVersion: 4 
+
+ReferenceSpace: TAL 
+
+OriginalVMRResolutionX:     1
+OriginalVMRResolutionY:     1
+OriginalVMRResolutionZ:     1
+OriginalVMROffsetX:         0
+OriginalVMROffsetY:         0
+OriginalVMROffsetZ:         0
+OriginalVMRFramingCubeDim:  256
+
+LeftRightConvention:        1
+
+SubjectVOINamingConvention: <VOI>_<SUBJ>
+
+
+NrOfVOIs:                   75
+

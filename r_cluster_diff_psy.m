@@ -1,69 +1,33 @@
-%% Cluster_data analysis
+% Cluster_data
 clear,
 
 % add data folder to path
 addpath('data')
 addpath('functions')
 
-% load roiglm measures
-load psc.mat
-
 % load psy measures
-load psymeasdata.mat
+load data_diff.mat
 
-% headers
-headers_psc = createPSCHeaders();
+data_raw = data_diff;
 
-headers_psymeas = psymeasname;
-
-headers = [headers_psc headers_psymeas];
-
-% data
-data_raw_psy = npsymeas;
-
-data_raw_psc = psc;
 
 % ------
 % var psymeasname - name of the variables available 
 % var npsymeas - values of the variables
 % ------
 
-%% data preprocessing
-
-% reshape (concatenate ever session per patient)
-data_raw_t = [];
-
-for p = 1:15
-    data_raw_l = [];
-    
-    for s = 1:5
-        data_raw_l = [data_raw_l data_raw_psc( ((p-1)*5) + s, :)];
-    end
-    data_raw_t(p,:) = data_raw_l;
-end
-data_raw = data_raw_t;
-
-% concat with psy measures
-data_raw = [data_raw data_raw_psy];
-
-
-% data de-mean and data normalization
-for m = 1:size(data_raw, 2)
-    data(:, m) = (data_raw(:, m) - min(data_raw(:, m))) ./ ( max(data_raw(:, m)) - min(data_raw(:, m)) );
-end
-
-
-
 %% presets
 cluster_num = 2;
 
 
-%% clustering
+%% data preprocessing
 
+% data de-mean and data normalization
+data = (data_raw - min(data_raw)) ./ ( max(data_raw) - min(data_raw) );
 % find clusters in data
 [c_idx,c_means] = kmeans(data,...
     cluster_num,... % number of clusters
-    'replicates', 10,... % repeats the clustering process starting from different randomly selected centroids for each replicate
+    'replicates',5,... % repeats the clustering process starting from different randomly selected centroids for each replicate
     'display', 'iter',... 
     'dist', 'sqeuclidean'); % use euclidean distance to determine best centroid for each point
 
@@ -87,14 +51,12 @@ end
 
 plot3(c_means(:,1),c_means(:,2),c_means(:,3),'ko');
 plot3(c_means(:,1),c_means(:,2),c_means(:,3),'kx');
-
 hold off
 
 view(-137,10);
 grid on
 
 %%
-figure
 eucD = pdist(data,'euclidean');
 clustTreeEuc = linkage(eucD,'average');
 
@@ -104,33 +66,13 @@ h_gca.TickDir = 'out';
 h_gca.TickLength = [.002 0];
 
 
-%% Classical MDS
-
-dissimilarities = pdist(data,'euclidean');
-
-[Y,e] = cmdscale(dissimilarities);
-
-labels = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'};
-
-figure, 
-grid 
-for i = 1:cluster_num
-    clust_i_idxs = find(c_idx == i);
-    plot3(Y(clust_i_idxs,1),Y(clust_i_idxs,2),Y(clust_i_idxs,3),ptsymb{i});
-    hold on
-end
-
-offset = 0.15;
-text(Y(:,1)+offset,Y(:,2)+offset,Y(:,3)+offset,labels,'HorizontalAlignment','left');%% Classical MDS
-
-
 %% PCA
 [coeff,score,latent,~,explained] = pca(data);
 
 labels = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'};
 
 figure
-title('combine')
+
 
 for i = 1:cluster_num
     clust_i_idxs = find(c_idx == i);
@@ -141,13 +83,31 @@ end
 offset = 0.15;
 text(score(:,1)+offset,score(:,2)+offset,score(:,3)+offset,labels,'HorizontalAlignment','left');
 
-%%
-
-headers_cell = arrayfun(@(x)char(headers(x)),1:numel(headers),'uni',false);
+title('neuropsy');
 
 %%
-figure, 
-biplot(coeff(:,1:3),'scores',score(:,1:3), 'varlabels', headers_cell );
+figure
+
+ptsymb = {'b.','r.'};
+
+for i = 1:cluster_num
+    clust_i_idxs = find(c_idx == i);
+    plot3( score(clust_i_idxs,1), score(clust_i_idxs,2), score(clust_i_idxs,3), ...
+        ptsymb{i},...
+        'MarkerSize', 20);
+    grid on;
+    hold on;
+end
+
+offset = 0.15;
+text( score(:,1)+offset, score(:,2)+offset, score(:,3)+offset, ...
+    labels, ...
+    'HorizontalAlignment', 'left', ...
+    'FontSize', 12,...
+    'FontName', 'Helvetica'...
+    );
+
+title('neuropsy');
 
 %% 
 mean_val_per_clust = zeros(cluster_num, size(data, 2));
@@ -156,3 +116,47 @@ for i = 1:cluster_num
     clust_i_idxs = find(c_idx == i);
     mean_val_per_clust (i, :) = mean(data_raw(clust_i_idxs,:));
 end
+
+
+%%
+
+feat_diff = zeros(1,size(data, 2));
+ranksum_diff = zeros(1,size(data, 2));
+
+header_n = cell(0);
+
+for i = 1: size(data, 2)
+    [feat_diff(i),~,stats] = ranksum(data(c_idx == 1,i),data(c_idx == 2,i))
+    ranksum_diff(i) = stats.ranksum;
+    
+    header_n{i} = strrep(headers(i), '_',' ') 
+end
+
+
+
+%% Sorting the variables
+
+[val, idxs] = sort(feat_diff);
+
+idxs_ = idxs(end:-1:1);
+
+figure 
+
+val_ = val (end:-1:1);
+barh(val_)
+
+hold on
+set(gca,...
+    'YTick', 1:25,...
+    'YLim', [0.5,25.5],...
+    'YTickLabel', header_n(idxs_))
+
+xlabel('p-value, Mann-Whitney between blue a red groups');
+
+
+
+line( [0.05, 0.05],[.5, 25.5] ,...
+    'Color','r',...
+    'LineStyle','--',...
+    'LineWidth', 1.5)
+

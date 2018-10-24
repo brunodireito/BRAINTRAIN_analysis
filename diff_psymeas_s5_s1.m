@@ -1,3 +1,11 @@
+%% ??
+% Script ??
+% Requires ??
+
+% Version 1.0
+% - Overall restructure
+
+% Author: Bruno Direito (2018)
 
 %%
 
